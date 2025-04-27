@@ -6,7 +6,7 @@ A decentralized lending protocol built on Asset Hub that enables users to lend a
 
 [Watch the Full Demo](https://www.youtube.com/watch?v=fxqqwEfpG0I)
 
-[![Demo Video](path-to-thumbnail)](your-demo-video-link)
+[![Demo Video](path-to-thumbnail)](https://www.youtube.com/watch?v=fxqqwEfpG0I)
 
 ## 📸 UI Screenshots
 
@@ -164,4 +164,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions or support, reach out to:
 - Email: your.email@example.com
-- Twitter: [@yourhandle](https://twitter.com/yourhandle) 
+- Twitter: [@yourhandle](https://x.com/revanchonnad) 
