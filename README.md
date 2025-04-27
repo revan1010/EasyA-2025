@@ -4,7 +4,7 @@ A decentralized lending protocol built on Asset Hub that enables users to lend a
 
 ## 🎥 Demo Video
 
-[Watch the Full Demo](your-demo-video-link)
+[Watch the Full Demo](https://www.youtube.com/watch?v=fxqqwEfpG0I)
 
 [![Demo Video](path-to-thumbnail)](your-demo-video-link)
 
