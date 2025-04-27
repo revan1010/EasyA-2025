@@ -1,89 +1,83 @@
 import { useState } from 'react';
-import Modal from '../shared/Modal';
+import { RepayModal as TokenRepayModal } from '../RepayModal';
+
+type TokenSymbol = 'GLMR' | 'ACA' | 'ASTR' | 'DOT' | 'USDC' | 'USDT';
+
+interface Position {
+  chain: string;
+  asset: TokenSymbol;
+  borrowed: number;
+  apy: number;
+}
 
 interface RepayModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const tokens = [
-  { symbol: 'GLMR', name: 'Moonbeam', borrowed: 0 },
-  { symbol: 'ACA', name: 'Acala', borrowed: 0 },
-  { symbol: 'ASTR', name: 'Astar', borrowed: 695 },
+// Mock data - in production this would come from your API or state management
+const BORROWED_POSITIONS: Position[] = [
+  { chain: 'Astar', asset: 'ASTR', borrowed: 695, apy: 4.5 }
 ];
 
-const RepayModal = ({ isOpen, onClose }: RepayModalProps) => {
-  const [selectedToken, setSelectedToken] = useState('');
-  const [amount, setAmount] = useState('');
+const RepayModal: React.FC<RepayModalProps> = ({ isOpen, onClose }) => {
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle repayment logic here
-    console.log('Repaying:', { token: selectedToken, amount });
-    onClose();
-  };
-
-  const selectedTokenDetails = tokens.find(t => t.symbol === selectedToken);
+  if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Repay Loan">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Token to Repay
-          </label>
-          <select
-            value={selectedToken}
-            onChange={(e) => setSelectedToken(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
-            required
-          >
-            <option value="">Select a token</option>
-            {tokens.filter(token => token.borrowed > 0).map((token) => (
-              <option key={token.symbol} value={token.symbol}>
-                {token.symbol} - {token.name} (Borrowed: ${token.borrowed})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Amount to Repay
-          </label>
-          <div className="relative">
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
-              placeholder="0.00"
-              required
-              min="0"
-              max={selectedTokenDetails?.borrowed || 0}
-              step="0.01"
-            />
-            {selectedToken && (
-              <span className="absolute right-3 top-2 text-gray-500">
-                {selectedToken}
-              </span>
-            )}
+    <>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="bg-white rounded-lg w-[400px]">
+          {/* Header */}
+          <div className="flex justify-between items-center p-4 border-b">
+            <h2 className="text-xl font-semibold">Select Position to Repay</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+            >
+              ×
+            </button>
           </div>
-          {selectedTokenDetails && (
-            <p className="mt-2 text-sm text-gray-500">
-              Maximum repayable amount: ${selectedTokenDetails.borrowed}
-            </p>
-          )}
-        </div>
 
-        <button
-          type="submit"
-          className="w-full px-4 py-3 text-white font-medium bg-rose-600 rounded-xl hover:bg-rose-700 transition-colors duration-200"
-        >
-          Repay Loan
-        </button>
-      </form>
-    </Modal>
+          <div className="p-4">
+            <div className="space-y-2">
+              {BORROWED_POSITIONS.map((position) => (
+                <button
+                  key={position.asset}
+                  onClick={() => setSelectedPosition(position)}
+                  className="w-full p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="font-medium">{position.asset}</div>
+                      <div className="text-sm text-gray-500">{position.chain}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium text-rose-600">
+                        ${position.borrowed.toFixed(2)}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {position.apy}% APY
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {selectedPosition && (
+        <TokenRepayModal
+          isOpen={!!selectedPosition}
+          onClose={() => setSelectedPosition(null)}
+          loanAmount={selectedPosition.borrowed}
+          loanToken={selectedPosition.asset}
+        />
+      )}
+    </>
   );
 };
 

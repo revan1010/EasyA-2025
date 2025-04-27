@@ -2,6 +2,16 @@ import HealthFactor from './HealthFactor';
 import SummaryCard from './SummaryCard';
 import PositionsTable from './PositionsTable';
 
+type TokenSymbol = 'GLMR' | 'ACA' | 'ASTR' | 'DOT' | 'USDC' | 'USDT';
+
+interface Position {
+  chain: string;
+  asset: TokenSymbol;
+  supplied: number;
+  borrowed: number;
+  apy: number;
+}
+
 const Dashboard = () => {
   // Mock data - in a real app, this would come from your API
   const mockData = {
@@ -12,7 +22,7 @@ const Dashboard = () => {
       { chain: 'Moonbeam', asset: 'GLMR', supplied: 500, borrowed: 0, apy: 3.2 },
       { chain: 'Acala', asset: 'ACA', supplied: 750, borrowed: 0, apy: 2.8 },
       { chain: 'Astar', asset: 'ASTR', supplied: 0, borrowed: 695, apy: 4.5 }
-    ]
+    ] as Position[]
   };
 
   return (
