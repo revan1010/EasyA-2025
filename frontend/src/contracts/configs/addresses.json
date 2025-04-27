@@ -1,0 +1,16 @@
+{
+    "network": "assetHubWestend",
+    "rpc": "https://westend-asset-hub-eth-rpc.polkadot.io",
+    "rpcBackups": [
+      "https://westend-asset-hub-rpc.polkadot.io",
+      "https://westend.api.onfinality.io/public-eth",
+      "https://westend-asset-hub-eth-rpc.dwellir.com"
+    ],
+    "contracts": {
+      "CollateralVault": "0x2a971E9F6BD32a7D20026DE9Eb186E69Aa29d56A",
+      "LendingEngine":   "0x2DBc08b0A920FC3E6DDA876edA800a3823Aa383A",
+      "AssetConversion": "0x51a8e38DF226ED8B27275467cF4959537B24A8E8",
+      "USDC":            "0x91C0ed808e4B283FcBfD94af7FFc3241dAa2CC89",
+      "DAI":             "0x1426775525A17E0873e32B1b216821738BCA8AbE"
+    }
+  }
