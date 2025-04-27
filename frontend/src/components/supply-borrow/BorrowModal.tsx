@@ -1,5 +1,10 @@
 import { useState, useRef } from 'react';
 import Modal from '../shared/Modal';
+import { ethers } from 'ethers';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
+import LENDING_ENGINE_ABI from '../../contracts/abi/lendingEngine.json';
+import ERC20_ABI from '../../contracts/abi/mUSDC.json';
+import { toast } from 'react-hot-toast';
 
 interface BorrowModalProps {
   isOpen: boolean;
@@ -8,20 +13,39 @@ interface BorrowModalProps {
 
 type CollateralType = 'nft' | 'token';
 
+const LENDING_ENGINE_ADDRESS = "0x2a971E9F6BD32a7D20026DE9Eb186E69Aa29d56A"; // Replace with actual address
+
 const tokens = [
-  { symbol: 'GLMR', name: 'Moonbeam', available: 500 },
-  { symbol: 'ACA', name: 'Acala', available: 750 },
-  { symbol: 'ASTR', name: 'Astar', available: 695 },
+  { 
+    symbol: 'USDC', 
+    name: 'USD Coin', 
+    available: 500,
+    address: "0x91C0ed808e4B283FcBfD94af7FFc3241dAa2CC89",
+    decimals: 18
+  },
+  { 
+    symbol: 'DAI', 
+    name: 'Dai Stablecoin', 
+    available: 750,
+    address: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+    decimals: 18
+  },
+  // Add other tokens here
 ];
 
 const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
   const [selectedToken, setSelectedToken] = useState('');
   const [amount, setAmount] = useState('');
   const [nftImage, setNftImage] = useState<string | null>(null);
-  const [collateralType, setCollateralType] = useState<CollateralType>('nft');
+  const [collateralType, setCollateralType] = useState<CollateralType>('token');
   const [collateralToken, setCollateralToken] = useState('');
   const [collateralAmount, setCollateralAmount] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { ready, authenticated } = usePrivy();
+  const { wallets } = useWallets();
+  const activeWallet = wallets[0];
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -34,16 +58,77 @@ const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Borrowing:', {
-      token: selectedToken,
-      amount,
-      collateralType,
-      collateral: collateralType === 'nft' ? nftImage : collateralToken,
-      collateralAmount: collateralType === 'token' ? collateralAmount : null,
-    });
-    onClose();
+    if (!ready || !authenticated || !activeWallet) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+
+    // If NFT collateral is selected, show mock message and return
+    if (collateralType === 'nft') {
+      toast.success('NFT collateral functionality coming soon!');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const token = tokens.find(t => t.symbol === selectedToken);
+      const collateral = tokens.find(t => t.symbol === collateralToken);
+      
+      if (!token || !collateral) {
+        throw new Error('Token not found');
+      }
+
+      const provider = await activeWallet.getEthereumProvider();
+      const ethersProvider = new ethers.BrowserProvider(provider);
+      const signer = await ethersProvider.getSigner();
+
+      // Initialize contracts
+      const lendingEngine = new ethers.Contract(
+        LENDING_ENGINE_ADDRESS,
+        LENDING_ENGINE_ABI,
+        signer
+      );
+      
+      const collateralTokenContract = new ethers.Contract(
+        collateral.address,
+        ERC20_ABI,
+        signer
+      );
+
+      // Parse amounts
+      const borrowAmount = ethers.parseUnits(amount, token.decimals);
+      const collateralTokenAmount = ethers.parseUnits(collateralAmount, collateral.decimals);
+
+      // First approve lending engine to spend collateral tokens
+      console.log('Approving collateral spend...');
+      const approveTx = await collateralTokenContract.approve(LENDING_ENGINE_ADDRESS, collateralTokenAmount);
+      await approveTx.wait();
+      console.log('Collateral approved');
+      
+      // Then borrow tokens
+      // We use the collateral token as the fee asset
+      // The third parameter is for slippage/deadline, using 0 as default
+      console.log('Borrowing tokens...');
+      console.log('Amount:', borrowAmount.toString());
+      console.log('Fee Asset:', collateral.address);
+      const borrowTx = await lendingEngine.borrow(
+        borrowAmount,         // Amount to borrow
+        collateral.address,   // Using collateral token as fee asset
+        0                    // Slippage/deadline parameter
+      );
+      await borrowTx.wait();
+      console.log('Borrow successful');
+
+      toast.success('Successfully borrowed tokens!');
+      onClose();
+    } catch (error) {
+      console.error('Borrowing error:', error);
+      toast.error('Failed to borrow tokens. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -191,7 +276,7 @@ const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
                   value={collateralToken}
                   onChange={(e) => setCollateralToken(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
-                  required
+                  required={collateralType === 'token'}
                 >
                   <option value="">Select a token</option>
                   {tokens.map((token) => (
@@ -233,9 +318,12 @@ const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
 
         <button
           type="submit"
-          className="w-full px-4 py-3 text-white font-medium bg-primary rounded-xl hover:bg-primary-dark transition-colors duration-200"
+          disabled={isLoading || !ready || !authenticated}
+          className={`w-full px-4 py-3 text-white font-medium bg-primary rounded-xl hover:bg-primary-dark transition-colors duration-200 ${
+            (isLoading || !ready || !authenticated) ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
-          Submit Borrow Request
+          {isLoading ? 'Processing...' : 'Submit Borrow Request'}
         </button>
       </form>
     </Modal>
