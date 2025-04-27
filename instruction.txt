@@ -1,0 +1,310 @@
+Cross-Chain Lending Protocol Frontend - Hackathon Guide
+Project Overview
+Building a proof-of-concept UI for a cross-chain lending protocol using Polkadot's XCM capabilities. This is a simplified frontend-focused version suitable for a 6-7 hour hackathon.
+
+Project Scope
+Given the time constraints, we'll focus on creating a visually impressive and functional frontend with mocked backend interactions. Our goal is to demonstrate the user experience and potential of cross-chain lending.
+
+Key Frontend Components (6-7 hours)
+1. Dashboard Page (2 hours)
+Overview Display:
+User's lending/borrowing positions across multiple chains
+Total supplied and borrowed value
+Health factor visualization (color-coded risk meter)
+Current interest rates for different assets
+Mock data for demonstration purposes
+jsx
+// Example dashboard component
+const Dashboard = () => {
+  // Mock data
+  const userData = {
+    healthFactor: 1.8,
+    totalSupplied: 1250.75,
+    totalBorrowed: 695.25,
+    positions: [
+      { chain: 'Moonbeam', asset: 'GLMR', supplied: 500, borrowed: 0, apy: 3.2 },
+      { chain: 'Acala', asset: 'ACA', supplied: 750, borrowed: 0, apy: 2.8 },
+      { chain: 'Astar', asset: 'ASTR', supplied: 0, borrowed: 695, apy: 4.5 }
+    ]
+  };
+  
+  return (
+    <div className="dashboard">
+      <header>
+        <h1>Cross-Chain Lending Dashboard</h1>
+        <div className="health-meter">
+          <span>Health Factor: </span>
+          <span className={healthFactorClass(userData.healthFactor)}>
+            {userData.healthFactor.toFixed(2)}
+          </span>
+        </div>
+      </header>
+      
+      <div className="summary-cards">
+        <SummaryCard 
+          title="Total Supplied" 
+          value={`${userData.totalSupplied.toFixed(2)}`} 
+        />
+        <SummaryCard 
+          title="Total Borrowed" 
+          value={`${userData.totalBorrowed.toFixed(2)}`} 
+        />
+        <SummaryCard 
+          title="Available to Borrow" 
+          value={`${(userData.totalSupplied * 0.75 - userData.totalBorrowed).toFixed(2)}`} 
+        />
+      </div>
+      
+      <PositionsTable positions={userData.positions} />
+    </div>
+  );
+};
+2. Supply/Borrow Functionality (2 hours)
+Asset Management Interface:
+Chain selector (dropdown of Polkadot parachains)
+Asset selector for each chain
+Input field for amount with max button
+Supply and borrow action buttons
+Transaction confirmation modals
+Wallet connection integration
+jsx
+const SupplyBorrowPanel = () => {
+  const [activeTab, setActiveTab] = useState('supply');
+  const [selectedChain, setSelectedChain] = useState('moonbeam');
+  const [selectedAsset, setSelectedAsset] = useState('glmr');
+  const [amount, setAmount] = useState('');
+  
+  // Mock available chains and assets
+  const chains = [
+    { id: 'moonbeam', name: 'Moonbeam', icon: '/icons/moonbeam.svg' },
+    { id: 'acala', name: 'Acala', icon: '/icons/acala.svg' },
+    { id: 'astar', name: 'Astar', icon: '/icons/astar.svg' }
+  ];
+  
+  const assets = {
+    moonbeam: [
+      { id: 'glmr', name: 'GLMR', balance: 1500, apy: 3.2 },
+      { id: 'dot', name: 'DOT', balance: 50, apy: 5.7 }
+    ],
+    acala: [
+      { id: 'aca', name: 'ACA', balance: 2200, apy: 2.8 },
+      { id: 'ausd', name: 'aUSD', balance: 500, apy: 8.5 }
+    ],
+    astar: [
+      { id: 'astr', name: 'ASTR', balance: 8000, apy: 1.9 },
+      { id: 'sdn', name: 'SDN', balance: 100, apy: 4.2 }
+    ]
+  };
+  
+  const handleSubmit = () => {
+    // Show a loading spinner
+    // Simulate transaction delay
+    setTimeout(() => {
+      // Show success message
+      // Update UI state
+    }, 2000);
+  };
+  
+  return (
+    <div className="supply-borrow-panel">
+      <TabSelector 
+        options={['supply', 'borrow']} 
+        active={activeTab} 
+        onChange={setActiveTab} 
+      />
+      
+      <form onSubmit={handleSubmit}>
+        <ChainSelector 
+          chains={chains} 
+          selected={selectedChain} 
+          onChange={setSelectedChain} 
+        />
+        
+        <AssetSelector 
+          assets={assets[selectedChain]} 
+          selected={selectedAsset}
+          onChange={setSelectedAsset}
+        />
+        
+        <AmountInput 
+          value={amount} 
+          onChange={setAmount}
+          max={getMaxAmount(selectedChain, selectedAsset, activeTab)}
+        />
+        
+        <Button type="submit" className="action-button">
+          {activeTab === 'supply' ? 'Supply Asset' : 'Borrow Asset'}
+        </Button>
+      </form>
+    </div>
+  );
+};
+3. Cross-Chain Transfer Visualization (1.5 hours)
+Interactive XCM Flow Diagram:
+Visual representation of assets moving between chains
+Animation for cross-chain transfers
+Network of connected parachains
+Mocked success/failure states
+Transaction history with status indicators
+jsx
+const CrossChainVisualizer = () => {
+  // Mock transaction for demonstration
+  const [isTransferring, setIsTransferring] = useState(false);
+  const [completedPath, setCompletedPath] = useState(0);
+  
+  const startDemo = () => {
+    setIsTransferring(true);
+    
+    // Animate through the steps
+    let step = 0;
+    const interval = setInterval(() => {
+      step++;
+      setCompletedPath(step);
+      
+      if (step >= 3) {
+        clearInterval(interval);
+        setTimeout(() => {
+          setIsTransferring(false);
+          setCompletedPath(0);
+        }, 2000);
+      }
+    }, 1000);
+  };
+  
+  return (
+    <div className="xcm-visualizer">
+      <h2>Cross-Chain Messaging Visualizer</h2>
+      
+      <div className="network-diagram">
+        <div className={`node polkadot ${completedPath >= 1 ? 'active' : ''}`}>
+          Polkadot Relay
+        </div>
+        
+        <svg className="connector">
+          <path 
+            className={`path ${completedPath >= 1 ? 'active' : ''}`} 
+            d="M50,50 L150,50" 
+          />
+        </svg>
+        
+        <div className={`node parachain-a ${completedPath >= 2 ? 'active' : ''}`}>
+          Moonbeam
+        </div>
+        
+        <svg className="connector">
+          <path 
+            className={`path ${completedPath >= 2 ? 'active' : ''}`} 
+            d="M200,50 L300,50" 
+          />
+        </svg>
+        
+        <div className={`node parachain-b ${completedPath >= 3 ? 'active' : ''}`}>
+          Acala
+        </div>
+      </div>
+      
+      <div className="transaction-status">
+        {isTransferring ? (
+          <span className="status-transferring">Transfer in progress...</span>
+        ) : (
+          <Button onClick={startDemo}>Simulate XCM Transfer</Button>
+        )}
+      </div>
+      
+      <div className="transaction-history">
+        <h3>Recent Cross-Chain Transactions</h3>
+        <TransactionList transactions={mockTransactions} />
+      </div>
+    </div>
+  );
+};
+4. Responsive Design & Polish (1.5 hours)
+UI Enhancement:
+Responsive layout for all screen sizes
+Dark/light mode toggle
+Loading states and animations
+Error handling and feedback
+Tooltips explaining DeFi concepts
+Polkadot ecosystem branded design elements
+jsx
+// Example theme implementation
+const ThemeProvider = ({ children }) => {
+  const [theme, setTheme] = useState('dark');
+  
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.body.className = newTheme;
+  };
+  
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+// Example loading component
+const LoadingSpinner = ({ size = 'medium', message = 'Loading...' }) => {
+  return (
+    <div className={`loading-spinner size-${size}`}>
+      <div className="spinner"></div>
+      <p className="loading-message">{message}</p>
+    </div>
+  );
+};
+
+// Example tooltip component
+const DeFiTooltip = ({ term, children }) => {
+  const tooltipContent = {
+    'health factor': 'A measure of how safe your loan is from liquidation. Higher is better.',
+    'collateral': 'Assets you supply that enable you to borrow other assets.',
+    'xcm': 'Cross-Consensus Messaging - Polkadot\'s protocol for communication between parachains.',
+    // More terms...
+  };
+  
+  return (
+    <div className="defi-tooltip">
+      {children}
+      <span className="tooltip-icon">?</span>
+      <div className="tooltip-content">{tooltipContent[term.toLowerCase()]}</div>
+    </div>
+  );
+};
+Mocking Backend Integration
+Since we're focusing on the frontend, you'll need to mock the backend functionality:
+
+Create Static Data Sets:
+Define JSON objects for assets, interest rates, user balances
+Create realistic but fictional transaction histories
+Define state transitions for user actions
+Simulate Network Requests:
+Add artificial delays with setTimeout
+Create mock success/failure responses
+Implement loading states during "transactions"
+Local State Management:
+Use React context or Redux for global state
+Update state to simulate real transactions
+Persist state in localStorage to maintain demo state
+Implementation Tips
+Focus on visual appeal:
+Polished UI is more important than real functionality
+Use animations to illustrate cross-chain concepts
+Create a cohesive design system with Polkadot-themed colors
+Think about the demo flow:
+Plan the exact steps you'll show during the presentation
+Ensure mocked data looks realistic for these steps
+Have fallbacks in case of demo issues
+Emphasize cross-chain visualization:
+This is your unique selling point
+Create engaging visualizations of assets moving between chains
+Use diagrams to explain the concept clearly
+Document assumptions:
+Be explicit about what's mocked vs. implemented
+Outline how you would connect to real backends in the future
+Hackathon Pitch Points
+Problem: DeFi UX is complex and even more so across chains
+Solution: Unified interface for cross-chain lending operations
+Innovation: Intuitive visualization of cross-chain asset movements
+Future Vision: How this UI connects to a full cross-chain lending protocol
+Differentiation: Why your approach to cross-chain UX is superior
